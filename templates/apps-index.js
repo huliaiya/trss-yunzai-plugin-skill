@@ -2,6 +2,8 @@
 // 聚合 apps/ 下的每个文件，导出给 loader 的 `apps` 对象
 // 依据：lib/plugins/loader.js#getPlugins + importPlugin（module.apps 分支）
 //      Yunzai-genshin/index.js、TRSS-Plugin/index.js（同样的聚合写法）
+// 注意：logger / Bot 是全局；APPS_DIR 是相对「启动目录（仓库根）」的路径，
+//      import() 的 `./apps/${f}` 是相对本文件的路径 —— 两者不要混。
 
 import fs from "node:fs"
 
