@@ -18,6 +18,8 @@ export class dailyPush extends plugin {
           log: false,            // false 时降到 debug
         },
       ],
+      // 同时暴露一条手动触发命令，方便调试（不需要可删掉）
+      rule: [{ reg: "^#测试推送$", fnc: "trigger", permission: "master" }],
     })
   }
 
@@ -42,6 +44,3 @@ export class dailyPush extends plugin {
     return this.reply("已手动执行一次推送")
   }
 }
-
-// 若想同时暴露命令，可在 constructor 的 rule 里加：
-// rule: [{ reg: "^#测试推送$", fnc: "trigger", permission: "master" }]
