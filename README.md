@@ -63,4 +63,3 @@ git clone https://github.com/huliaiya/trss-yunzai-plugin-skill.git \
 ## 说明
 
 结论基于阅读 TRSS-Yunzai `main` 分支（v3.1.3）源码，**未实际启动 bot 运行验证**。框架演进后以源码为准。
-
