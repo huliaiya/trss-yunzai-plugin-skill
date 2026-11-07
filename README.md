@@ -3,6 +3,8 @@
 > 给 AI 编码助手（Claude Code / Trae / 任何支持 Agent Skill 的工具）用的 **TRSS-Yunzai 插件开发 Skill**，
 > 同时也可以当人类可读的开发手册。
 
+> **不想装 Skill？直接用这份单文件指南**：[`TRSS-Yunzai-插件开发指南.md`](./TRSS-Yunzai-插件开发指南.md) —— 自包含，可把链接直接丢给任意 AI 助手阅读。
+
 TRSS-Yunzai 指 [`TimeRainStarSky/Yunzai`](https://github.com/TimeRainStarSky/Yunzai)：v3.x、ESM、基于 Miao-Yunzai 的多协议端 Yunzai 应用端。
 
 ---
