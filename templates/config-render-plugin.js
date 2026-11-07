@@ -5,6 +5,7 @@
 //   lib/plugins/plugin.js  → renderImg(plugin, tpl, data, cfg)
 //   lib/plugins/runtime.js → 自动注入 defaultLayout（指向 plugins/miao-plugin/resources/common/layout/default.html）
 //   示例：Yunzai-genshin/model/base.js、apps/dailyNote.js
+// 注意：plugin / logger 是全局；makeConfig 的路径按本文件位置算是 3 层向上。
 
 import makeConfig from "../../../lib/plugins/config.js"
 
