@@ -210,7 +210,8 @@ for (let i in files) {
 **A. 用框架助手（推荐）** —— `lib/plugins/config.js`**【源码】**
 
 ```js
-import makeConfig from "../../lib/plugins/config.js"
+// 路径深度取决于文件位置：plugins/<name>/apps/x.js → ../../../lib/plugins/config.js
+import makeConfig from "../../../lib/plugins/config.js"
 
 const { config, configSave } = await makeConfig(
   "my-plugin",                                  // → config/my-plugin.yaml
@@ -255,7 +256,7 @@ await this.renderImg("my-plugin", "html/my-page", data)
 
 **【源码】** `plugins/other/install.js`
 
-- 23 个仓库**硬编码**在 `list` 常量里（genshin、miao-plugin、TRSS-Plugin、yenai、Guoba、flower、xianyu、earth-k、StarRail、ICQQ/QQBot/WeChat/KOOK/Telegram/Discord/Route…），另有 `map` 去掉 `-Plugin` 后缀做别名。
+- **24 个仓库硬编码**在 `list` 常量里：`Atlas`、`genshin`、`DF-Plugin`、`ws-plugin`、`TRSS-Plugin`、`miao-plugin`、`Philia-Plugin`、`Guoba-Plugin`、`yenai-plugin`、`flower-plugin`、`xianyu-plugin`、`earth-k-plugin`、`useless-plugin`、`StarRail-plugin`、`xiaoyao-cvs-plugin`、`trss-xianxin-plugin`、`Telegram-Plugin`、`Discord-Plugin`、`WeChat-Plugin`、`QQBot-Plugin`、`Route-Plugin`、`ICQQ-Plugin`、`KOOK-Plugin`、`Secluded-Plugin`；另有 `map` 去掉 `-Plugin` 后缀做别名。
 - `#安装插件` 列出未安装项；`#安装xxx` → `git clone --depth 1 --single-branch` 到 `plugins/<name>` → 若存在 `package.json` 则根目录 `pnpm install` → 重启。
 - **没有中心插件索引仓库**；想装不在清单里的插件只能手动 `git clone` 到 `plugins/`。
 - `plugins/other/update.js` 存在（8.8KB），**具体更新策略未读、未验证**。
