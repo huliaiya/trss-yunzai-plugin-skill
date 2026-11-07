@@ -1,0 +1,9 @@
+{
+  "_comment": "可选：框架不读 package.json，没有第三方依赖就整份删掉；有依赖才写，并保持 type=module",
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.7.0"
+  }
+}
