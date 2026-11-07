@@ -19,7 +19,7 @@
 | `import { segment } from "icqq"` | TRSS 用 `oicq`；用全局 `segment` 更安全 |
 | `import { Common } from "#miao"` | TRSS 里仍需 miao-plugin；也可用 `this.renderImg(...)` 少一条依赖 |
 | `puppeteer.render(...)` 旧写法 | 换 `e.runtime.render(plugin, tpl, data, cfg)` 或 `this.renderImg(...)` |
-| `segment.button(...)` | Miao loader 有兜底 `segment.button = () => ""`；TRSS 按实际协议端能力，**未验证** |
+| `segment.button(...)` | **只有 QQBot 适配器能用**【用户确认】；OneBotv11 / ICQQ / Satori / Milky 等端无效或降级纯文本，且 Miao loader 的 `segment.button = () => ""` 兜底会让它静默消失。见 `templates/button-plugin.js` |
 | `conKey()` 不含 `self_id` | TRSS 含 `self_id`，多账号下上下文天然隔离，行为有差异 |
 | 依赖安装 | 两边都是 pnpm workspace（`plugins/**`），命令一致 |
 
