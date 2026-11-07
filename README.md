@@ -135,7 +135,7 @@ plugins/express/
 6. `package.json`：可以不写；依赖靠 `pnpm-workspace.yaml` 的 `plugins/**`
 7. 配置管理：`makeConfig` → `config/<name>.yaml`，或自己读写 YAML
 8. 渲染：`e.runtime.render` / `this.renderImg`，**强依赖 miao-plugin 的 layout**
-9. 插件安装 / 更新 / 生态：`plugins/other/install.js` 硬编码 23 个仓库，无中心索引
+9. 插件安装 / 更新 / 生态：`plugins/other/install.js` 硬编码 24 个仓库，无中心索引
 10. 与 Miao-Yunzai / 原版的差异（含逐文件 diff 结论表）
 11. 12 条高频坑
 12. 未取得 / 未验证清单 + 模板索引
