@@ -17,7 +17,7 @@ TRSS-Yunzai 指 [`TimeRainStarSky/Yunzai`](https://github.com/TimeRainStarSky/Yu
 - 抄几个第三方插件，但抄到的写法互相矛盾（有的有 `package.json`、有的没有；有的用 `apps/`、有的平铺）；
 - 踩到「有 `index.js` 就不加载其它文件」「没装 miao-plugin 渲染静默失效」这类不报错的坑。
 
-本仓库做的事情就是：**把框架源码和官方/主流插件仓库读一遍，把隐式规则显式写下来**，每条结论都标注依据，并给一份 AI 可以直接照着生成代码的规范 + 四份模板。
+本仓库做的事情就是：**把框架源码和官方/主流插件仓库读一遍，把隐式规则显式写下来**，每条结论都标注依据，并给一份 AI 可以直接照着生成代码的规范 + 五份模板。
 
 ---
 
@@ -45,12 +45,13 @@ TRSS-Yunzai 指 [`TimeRainStarSky/Yunzai`](https://github.com/TimeRainStarSky/Yu
     ├── minimal-plugin.js         # 最小可跑插件：rule + 权限 + 上下文 + recallMsg
     ├── apps-index.js             # index.js 聚合 apps/，含缺依赖提示
     ├── task-plugin.js            # task 定时任务（无 e 参数，需自己 pickGroup）
-    └── config-render-plugin.js   # makeConfig 配置 + renderImg 渲染 + 模板片段
+    ├── config-render-plugin.js   # makeConfig 配置 + renderImg 渲染 + 模板片段
+    └── button-plugin.js          # 多行按钮菜单（仅 QQBot 适配器）
 ```
 
 - **`SKILL.md`** 是唯一必须读的文件。它自带 `name` / `description`（description 里写明了触发场景），AI 工具靠这个判断何时加载。
 - **`reference/`** 是深水区，`SKILL.md` 里需要细节时会指向它们，避免主文档被细节淹没。
-- **`templates/`** 是可直接复制改名的骨架，四份分别覆盖「最小插件 / 多文件聚合 / 定时任务 / 配置+渲染」四种典型形态。
+- **`templates/`** 是可直接复制改名的骨架，五份分别覆盖「最小插件 / 多文件聚合 / 定时任务 / 配置+渲染 / QQBot 按钮菜单」五种典型形态。
 
 ---
 
@@ -134,7 +135,7 @@ plugins/express/
 5. `apps/` 聚合模式：不是框架目录，是 `index.js` 主动读出来的约定（附三仓写法对比）
 6. `package.json`：可以不写；依赖靠 `pnpm-workspace.yaml` 的 `plugins/**`
 7. 配置管理：`makeConfig` → `config/<name>.yaml`，或自己读写 YAML
-8. 渲染：`e.runtime.render` / `this.renderImg`，**强依赖 miao-plugin 的 layout**
+8. 渲染：`e.runtime.render` / `this.renderImg`，**强依赖 miao-plugin 的 layout**；按钮消息**仅 QQBot 适配器**可用
 9. 插件安装 / 更新 / 生态：`plugins/other/install.js` 硬编码 24 个仓库，无中心索引
 10. 与 Miao-Yunzai / 原版的差异（含逐文件 diff 结论表）
 11. 12 条高频坑
@@ -151,6 +152,7 @@ plugins/express/
 | **【源码】** | 可直接在 `lib/plugins/*.js` 里读到，可信度最高 |
 | **【文档】** | 官方 README / `docs` 分支明说 |
 | **【示例】** | 从官方/主流插件仓库归纳，框架并未强制 |
+| **【用户确认】** | 使用者基于实际运行环境确认的事实，本次未从源码验证 |
 | **【未验证】** | 推断，或未实际运行验证 |
 
 ---
@@ -161,7 +163,7 @@ plugins/express/
 - **原版 Yunzai-Bot 取不到**。`Le-niao/Yunzai-Bot` 在 GitHub 返回 403（TOS blocked），所以「与原版的差异」实际是以 **Miao-Yunzai** 为基线做的 diff。
 - **官方插件规范不存在**，本仓库是逆向整理；`package.json` 必填字段、插件索引仓库这两项都确认「没有」，而不是「没找到」。
 - **未读完的部分**：`plugins/other/update.js`、`plugins/system/add.js` 只确认存在，内容未读；`renderers/`、`data/` 作用未确认。
-- `SKILL.md` 里对 `segment.button`、`namespace` 不一致导致热重载残留等少数结论标了**【未验证】**，请按实际环境测试。
+- **按钮消息的适用范围是用户确认的**：只有 QQBot 适配器支持，其它协议端无效或降级成纯文本（**【用户确认】**，不是源码验证）。`namespace` 不一致导致热重载残留等少数结论仍标**【未验证】**，请按实际环境测试。
 
 ---
 
