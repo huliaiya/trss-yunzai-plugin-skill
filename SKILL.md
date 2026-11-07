@@ -13,6 +13,7 @@ TRSS-Yunzai = `TimeRainStarSky/Yunzai`，基于 Miao-Yunzai 的多协议端 Yunz
 - **【源码】** = 可直接在 `lib/plugins/*.js` 里读到
 - **【文档】** = 官方 README / docs 分支明说
 - **【示例】** = 从官方/主流插件仓库归纳，框架并未强制
+- **【用户确认】** = 由使用者基于实际运行环境确认的事实，本次未从源码验证
 - **【未验证】** = 推断或未实际运行
 
 ---
@@ -250,6 +251,30 @@ await this.renderImg("my-plugin", "html/my-page", data)
 
 模板约定：`resources/html/*.html` 里用 `{{extend defaultLayout}}` + `{{block 'css'}}` / `{{block 'main'}}`，资源引用用 `{{_res_path}}`/`pluResPath`。**【示例，genshin 的 resources 结构为参照】**
 
+### 按钮消息：只有 QQBot 适配器能用
+
+**【用户确认】** 按钮消息仅支持 **QQBot 适配器**（`plugins/adapter` 里的 QQBot 那套）。
+OneBotv11 / ICQQ / Satori / Milky 等其它协议端**不支持**：发出去要么无效，要么降级成纯文本。
+
+这点特别容易误判，因为：
+
+- Miao 的 loader 里有 `segment.button = () => ""` 兜底（**【源码】**）→ 不支持的端上**不会报错**，只是按钮凭空消失。
+- 第三方教程里的按钮文档本身有字段冲突，照抄会调不通。
+
+写法：`segment.button(rows)`，完整可跑示例见 [`templates/button-plugin.js`](../templates/button-plugin.js)。
+
+| 约束 | 值 |
+| --- | --- |
+| 每行按钮数 | 最多 **10** 个 |
+| 行数 | 最多 **5** 行 |
+| 超出 | 自动**另发一条**消息，不报错 |
+| `text` | 必填 |
+| `style` | `1`–`4`（颜色/样式档位） |
+| 三种动作 | `callback` / `input` / `link`，三选一 |
+| `callback` | **平台已砍，无法自动发送**，改用 `input` 或 `toCallback` |
+
+⚠️ **字段分歧**：常见的那份按钮文档里，属性表写 `enter`，示例却用 `send: true`；属性表写 `style`，示例 7 又写成 `reply: 1`。本 Skill 的模板**以属性表为准（`style` + `enter`）**，实际请以你所用协议端的实测结果为准。
+
 ---
 
 ## 8. 插件安装 / 更新 / 生态
@@ -298,20 +323,21 @@ await this.renderImg("my-plugin", "html/my-page", data)
 9. **缺依赖只打日志不崩**：先根目录 `pnpm i`；仍报错再 `cd plugins/<name> && pnpm add <包>`。**【源码】**
 10. **`namespace` 与文件名不一致时热重载可能残留 handler**（卸载按 namespace 精确匹配）—— **【未验证】**，改插件后建议重启。
 11. **`runtime.render` 的 tpl 路径不要带 `.html`**（源码里会 `replace(/.html$/, "")` 再拼）。**【源码】**
-12. **别在 TRSS 里用 `segment.button`**：Miao 的 loader 有 `segment.button = () => ""` 兜底，TRSS 依赖 `oicq` 的导出，写法需按实际协议端确认。**【源码 + 未验证】**
+12. **按钮消息只有 QQBot 适配器能用**【用户确认】：OneBotv11 / ICQQ / Satori / Milky 等其它协议端发了无效或降级成纯文本；又因为 Miao 的 loader 有 `segment.button = () => ""` 兜底（**【源码】**），**不支持的端上连报错都没有**，按钮直接消失。写法与限制见 §7 末尾「按钮消息」小节和 [`templates/button-plugin.js`](../templates/button-plugin.js)。
 
 ---
 
 ## 11. 模板（可直接复制）
 
-`templates/` 下四份，均已按上述规则写好，只需把 `<my-plugin>` 换成你的目录名：
+`templates/` 下五份，均已按上述规则写好，只需把 `<my-plugin>` 换成你的目录名：
 
 | 文件 | 用途 |
 | --- | --- |
-| `templates/minimal-plugin.js` | 最小可跑插件：一条 rule + 权限 + 冷却 |
+| `templates/minimal-plugin.js` | 最小可跑插件：两条 rule + 权限 + 上下文 |
 | `templates/apps-index.js` | `index.js` 聚合 `apps/`，含缺依赖提示 |
 | `templates/task-plugin.js` | `task` 定时任务 + 主动推送 |
 | `templates/config-render-plugin.js` | `makeConfig` 配置 + `renderImg` 渲染 + 图片发送 |
+| `templates/button-plugin.js` | **仅 QQBot 适配器**的多行按钮菜单：指令 / 输入 / 链接三种按钮 |
 
 新建插件的落地顺序建议：
 
@@ -341,4 +367,4 @@ await this.renderImg("my-plugin", "html/my-page", data)
 
 - `reference/loader-internals.md`：loader 分发流程、权限/冷却/事件匹配细节
 - `reference/migration-miao.md`：Miao ↔ TRSS 双向迁移检查表
-- `templates/*.js`：四份模板
+- `templates/*.js`：五份模板
