@@ -1,6 +1,9 @@
 // plugins/<my-plugin>/apps/hello.js
-// 最小可跑插件：一条 rule + 权限 + 冷却 + 上下文
-// 依据：lib/plugins/plugin.js（构造参数与方法）、lib/plugins/loader.js（分发/权限/冷却）
+// 最小可跑插件：两条 rule + 权限 + 上下文
+// 依据：lib/plugins/plugin.js（构造参数与方法）、lib/plugins/loader.js（分发/权限/上下文）
+// 注意：plugin / segment / logger / Bot 是 loader 注入的全局变量（lib/plugins/loader.js）。
+//      若你的框架不注入，或要跨 Miao/原版迁移，把下面这行加上更稳：
+//      import plugin from "../../../lib/plugins/plugin.js"
 
 export class hello extends plugin {
   constructor() {
