@@ -4,7 +4,7 @@
 >
 > 这是一份 **TRSS-Yunzai 插件开发规范 + 可直接复制的模板集**。TRSS-Yunzai 指 `TimeRainStarSky/Yunzai`（v3.x、ESM、基于 Miao-Yunzai 的多协议端 Yunzai 应用端）。
 >
-> 读完本文件，你应当能够直接在 `plugins/<你的插件>/...` 下产出可运行、可维护的插件代码，**不需要再打开任何其它文件**——下面五个模板都是完整代码，不是片段。
+> 读完本文件，你应当能够直接在 `plugins/<你的插件>/...` 下产出可运行、可维护的插件代码，**不需要再打开任何其它文件**——下面七个模板都是完整代码，不是片段。
 >
 > 生成代码时请遵守：
 >
@@ -42,7 +42,7 @@
 - [9 插件安装与生态](#9-插件安装与生态)
 - [10 与 Miao 的差异](#10-与-miao-的差异)
 - [11 高频坑清单](#11-高频坑清单)
-- [12 五份模板完整代码](#12-五份模板完整代码)
+- [12 七份模板完整代码](#12-七份模板完整代码)
 - [13 新建插件落地清单](#13-新建插件落地清单)
 - [14 未取得与未验证](#14-未取得与未验证)
 
@@ -529,9 +529,9 @@ cd plugins/<name> && pnpm add xxx      # ② 仍不行，进插件目录单独�
 
 ---
 
-## 12 五份模板完整代码
+## 12 七份模板完整代码
 
-五份模板分别覆盖「最小插件 / 多文件聚合 / 定时任务 / 配置+渲染 / QQBot 按钮菜单」。把 `<my-plugin>` 换成你的目录名即可。
+七份模板分别覆盖「最小插件 / 多文件聚合 / 定时任务 / 配置+渲染 / QQBot 按钮菜单 / 事件型插件 / 依赖声明」。把 `<my-plugin>` 换成你的目录名即可。
 
 ### 12.1 最小插件（minimal-plugin.js）
 
@@ -862,13 +862,124 @@ export class buttonMenu extends plugin {
  */
 ```
 
+### 12.6 事件型插件（event-plugin.js）
+
+对应文件：`plugins/<my-plugin>/apps/welcome.js`
+
+> 事件型插件**不写 rule** 也能生效：`event` 匹配时 `accept()` 会被调用，不匹配时连 `accept()` 都不会执行。
+
+```js
+// plugins/<my-plugin>/apps/welcome.js
+// 事件型插件模板：不写 rule，只写 accept()
+// 依据：lib/plugins/loader.js#filtEvent / deal
+//
+// 事件型插件的特点：
+//   - 只有 event 匹配当前事件时才会执行；不匹配时连 accept() 都不会跑。
+//   - accept() 在该插件所有 rule 之前执行：返回 "return" 中断本插件后续处理，
+//     返回真值 break 掉后续，返回 undefined 继续。
+//   - 不写 rule 完全合法，因为事件型插件靠 accept() 驱动，不靠命令正则。
+// event 串 = post_type.<message_type|notice_type|request_type>.<sub_type>，支持 `*` 通配。
+// 注意：plugin / logger / Bot 是 loader 注入的全局变量。
+
+/** 只关心「有人入群」这一种事件：最简写法 */
+export class welcome extends plugin {
+  constructor() {
+    super({
+      name: "入群欢迎",
+      dsc: "新人入群时自动发欢迎语",
+      event: "notice.group.increase",   // post_type=notice, notice_type=group, sub_type=increase
+      priority: 100,                    // 数字越小越先执行
+    })
+  }
+
+  async accept() {
+    const e = this.e
+    // 机器人自己被拉进群时不欢迎
+    if (e.user_id == e.self_id) return
+
+    const groupId = e.group_id                       // 事件里一定带 group_id
+    const nickname = e.sender?.card || e.sender?.nickname || String(e.user_id)
+
+    // 想额外拿群名/群对象时自己 pick，别假设 e.group 一定存在（未验证）
+    let groupName = ""
+    try {
+      groupName = (await Bot.pickGroup(groupId)).name || ""
+    } catch (err) {
+      logger.debug(`[入群欢迎] 取群名失败：${groupId}`, err)
+    }
+
+    // reply(msg, quote, data)：data.at 在群聊里 @ 新人
+    return this.reply(
+      `欢迎 ${nickname} 加入${groupName || groupId}！发送「#帮助」查看功能～`,
+      false,
+      { at: e.user_id },
+    )
+  }
+}
+
+/** 一个插件覆盖多种事件 + 自己区分事件类型：用通配 event，在 accept() 里看 sub_type */
+export class groupMemberEvent extends plugin {
+  constructor() {
+    super({
+      name: "入群退群通知",
+      dsc: "同一条规则覆盖入群/退群，按 sub_type 分流",
+      event: "notice.group.*",          // 通配：increase / decrease 都会进来
+      priority: 200,
+    })
+  }
+
+  async accept() {
+    const e = this.e
+    if (e.user_id == e.self_id) return
+
+    switch (e.sub_type) {
+      case "increase":
+        return this.reply(`新人 ${e.user_id} 加入了群 ${e.group_id}`, false, { at: e.user_id })
+      case "decrease":
+        // 退群事件可能来自主动退群（operator_id），也可能被踢
+        return this.reply(`成员 ${e.user_id} 离开了群 ${e.group_id}`)
+      default:
+        return
+    }
+  }
+}
+
+/* 常用事件串速查（event 字段直接填这些）
+ * 私聊/群消息      message.group / message.private        （默认 event 就是 message）
+ * 群成员增加/减少  notice.group.increase / notice.group.decrease
+ * 群文件上传       notice.group.upload
+ * 群禁言           notice.group.ban
+ * 戳一戳           notice.notify.poke
+ * 好友申请         request.friend
+ * 群邀请/加群请求  request.group.invite / request.group.add
+ */
+```
+
+### 12.7 可选依赖声明（package.json）
+
+对应文件：`plugins/<my-plugin>/package.json`
+
+> 框架**不读**这个文件，它只给 pnpm 用。没有第三方依赖就整份删掉；JSON 不支持注释，所以说明放在 `_comment` 字段里（npm / pnpm 会忽略未知字段）。
+
+```json
+{
+  "_comment": "可选：框架不读 package.json，没有第三方依赖就整份删掉；有依赖才写，并保持 type=module",
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.7.0"
+  }
+}
+```
+
 ---
 
 ## 13 新建插件落地清单
 
 1. `mkdir -p plugins/my-plugin/{apps,model,resources/html}`
 2. 写 `index.js`（照 12.2）
-3. 写 `apps/xxx.js`（照 12.1）
+3. 写 `apps/xxx.js`（命令型照 12.1，事件型照 12.6）
 4. 需要依赖 → 写 `package.json`（`"type":"module"` + `dependencies`）→ 根目录 `pnpm i`
 5. 需要配置 → `makeConfig`，文件落 `config/my-plugin.yaml`
 6. 需要出图 → 装 `miao-plugin`，`resources/html/*.html` + `renderImg`
