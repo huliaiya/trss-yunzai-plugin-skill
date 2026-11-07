@@ -19,7 +19,7 @@ TRSS-Yunzai 指 [`TimeRainStarSky/Yunzai`](https://github.com/TimeRainStarSky/Yu
 - 抄几个第三方插件，但抄到的写法互相矛盾（有的有 `package.json`、有的没有；有的用 `apps/`、有的平铺）；
 - 踩到「有 `index.js` 就不加载其它文件」「没装 miao-plugin 渲染静默失效」这类不报错的坑。
 
-本仓库做的事情就是：**把框架源码和官方/主流插件仓库读一遍，把隐式规则显式写下来**，每条结论都标注依据，并给一份 AI 可以直接照着生成代码的规范 + 五份模板。
+本仓库做的事情就是：**把框架源码和官方/主流插件仓库读一遍，把隐式规则显式写下来**，每条结论都标注依据，并给一份 AI 可以直接照着生成代码的规范 + 七份模板。
 
 ---
 
@@ -38,22 +38,27 @@ TRSS-Yunzai 指 [`TimeRainStarSky/Yunzai`](https://github.com/TimeRainStarSky/Yu
 
 ```
 .
-├── SKILL.md                      # 主文档：frontmatter + 12 节规则（AI 的入口）
+├── SKILL.md                      # 主文档：frontmatter + 10 节规则（AI 的入口）
 ├── README.md                     # 本文件
+├── TRSS-Yunzai-插件开发指南.md    # 自包含单文件版，可直接转发给外部 AI
+├── LICENSE                       # MIT
 ├── reference/
 │   ├── loader-internals.md       # loader 的加载 / 分发 / 权限 / 定时任务 / 热重载顺序
-│   └── migration-miao.md         # Miao-Yunzai ↔ TRSS 双向迁移检查表
+│   ├── migration-miao.md         # Miao-Yunzai ↔ TRSS 双向迁移检查表
+│   └── ecosystem.md              # 安装 / 更新 / 依赖 / 生态
 └── templates/
     ├── minimal-plugin.js         # 最小可跑插件：rule + 权限 + 上下文 + recallMsg
     ├── apps-index.js             # index.js 聚合 apps/，含缺依赖提示
     ├── task-plugin.js            # task 定时任务（无 e 参数，需自己 pickGroup）
     ├── config-render-plugin.js   # makeConfig 配置 + renderImg 渲染 + 模板片段
-    └── button-plugin.js          # 多行按钮菜单（仅 QQBot 适配器）
+    ├── button-plugin.js          # 多行按钮菜单（仅 QQBot 适配器）
+    ├── event-plugin.js           # 事件型插件：accept() + 通配 event + sub_type 分流
+    └── package.json              # 可选的最小依赖声明（"type": "module"）
 ```
 
 - **`SKILL.md`** 是唯一必须读的文件。它自带 `name` / `description`（description 里写明了触发场景），AI 工具靠这个判断何时加载。
 - **`reference/`** 是深水区，`SKILL.md` 里需要细节时会指向它们，避免主文档被细节淹没。
-- **`templates/`** 是可直接复制改名的骨架，五份分别覆盖「最小插件 / 多文件聚合 / 定时任务 / 配置+渲染 / QQBot 按钮菜单」五种典型形态。
+- **`templates/`** 是可直接复制改名的骨架，七份分别覆盖「最小插件 / 多文件聚合 / 定时任务 / 配置+渲染 / QQBot 按钮菜单 / 事件型插件 / 依赖声明」七种典型形态。
 
 ---
 
@@ -126,11 +131,11 @@ plugins/express/
 
 ---
 
-## 覆盖的 12 个主题
+## 覆盖的主题
 
-`SKILL.md` 的章节：
+`SKILL.md` 保留主干（照做就能写对插件），细节按需下沉到 `reference/`：
 
-1. 先判断：这是 TRSS 还是 Miao / 原版（`package.json` 的 `name`）
+1. 判断项目类型：TRSS 还是 Miao / 原版（`package.json` 的 `name`）
 2. 目录分工：`lib/plugins/` 是内核，`plugins/` 放插件
 3. 加载规则：有 `index.js` 只加载它，否则平铺加载 `*.js`；`priority`、`init` 返回 `"return"`、群聊 @ 限制、热重载、缺依赖提示
 4. 基类 `plugin`：构造字段、`reply` / `setContext` / `finish` / `addCleanup` / `renderImg`、`e` 上的字段、事件型插件
@@ -138,10 +143,10 @@ plugins/express/
 6. `package.json`：可以不写；依赖靠 `pnpm-workspace.yaml` 的 `plugins/**`
 7. 配置管理：`makeConfig` → `config/<name>.yaml`，或自己读写 YAML
 8. 渲染：`e.runtime.render` / `this.renderImg`，**强依赖 miao-plugin 的 layout**；按钮消息**仅 QQBot 适配器**可用
-9. 插件安装 / 更新 / 生态：`plugins/other/install.js` 硬编码 24 个仓库，无中心索引
-10. 与 Miao-Yunzai / 原版的差异（含逐文件 diff 结论表）
+9. 插件安装 / 更新 / 生态：`plugins/other/install.js` 硬编码 24 个仓库，无中心索引（详见 `reference/ecosystem.md`）
+10. 与 Miao-Yunzai / 原版的差异，含逐文件 diff 结论表与双向迁移检查表（详见 `reference/migration-miao.md`）
 11. 12 条高频坑
-12. 未取得 / 未验证清单 + 模板索引
+12. 未取得 / 未验证清单
 
 ---
 
@@ -169,6 +174,17 @@ plugins/express/
 
 ---
 
+## 两份文档的分工
+
+| 文件 | 定位 | 更新时机 |
+| --- | --- | --- |
+| `SKILL.md` + `reference/` + `templates/` | 装成 Agent Skill 的入口：主文件只留主干，细节分层按需加载 | 框架结论变更时 |
+| `TRSS-Yunzai-插件开发指南.md` | 对外可转发的自包含单文件版：一个链接丢给任意 AI 就能干活 | 同上 |
+
+两份内容同源。**改了一条框架结论（加载规则、基类字段、渲染方式、按钮限制等），必须同时更新两处**，否则会出现互相矛盾的写法。单文件版刻意不引用仓库内其它文件（保证单独打开也读得全），所以它是完整拷贝，不是链接汇编。
+
+---
+
 ## 相关仓库
 
 - [TimeRainStarSky/Yunzai](https://github.com/TimeRainStarSky/Yunzai) —— 本体，本仓库规则的主要来源
@@ -179,3 +195,5 @@ plugins/express/
 ---
 
 如果这个项目对你有帮助，欢迎点一个 ⭐ Star 支持一下～
+
+本仓库以 [MIT License](./LICENSE) 发布。
